@@ -3,51 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cihuuy post&read</title>
+  <title>Cihuuy Post</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; padding: 20px; margin: 0; }
+    body { font-family: sans-serif; background-color: #f0f2f5; padding: 20px; margin: 0; }
     .container { width: 95%; max-width: 500px; margin: 0 auto; }
-    input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; outline: none; }
-    button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-    button:hover { background-color: #0056b3; }
+    input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
     .post-container { margin-top: 20px; padding: 15px; border-radius: 12px; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    .post-container img { max-width: 100%; border-radius: 8px; margin-top: 10px; display: block; }
+    .post-container img { max-width: 100%; border-radius: 8px; margin-top: 10px; }
     .comment-box { background: #f8f9fa; padding: 8px; margin-top: 5px; border-radius: 6px; font-size: 13px; border-left: 3px solid #007bff; }
-    .btn-action { width: auto; padding: 6px 12px; font-size: 13px; margin-right: 5px; margin-top: 10px; }
+    .btn-action { width: auto; padding: 6px 12px; font-size: 13px; margin-right: 5px; }
     .btn-delete { background-color: #ff4d4d; }
-    .btn-comment { background-color: #28a745; width: auto; margin-top: 5px; }
+    .btn-comment { background-color: #28a745; width: auto; }
     #auth-section, #post-section { display: none; }
-    .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
   </style>
 </head>
 <body>
 
   <div class="container" id="auth-section">
     <div id="login-form">
-      <h2 style="text-align:center">Sign In</h2>
       <input type="text" id="login-username" placeholder="Username" />
       <input type="password" id="login-password" placeholder="Password" />
       <button onclick="handleLogin()">Login</button>
-      <p style="text-align:center; cursor:pointer; color:#007bff" onclick="toggleAuth(true)">Register New Account</p>
+      <p onclick="toggleAuth(true)" style="color:#007bff; cursor:pointer">Register</p>
     </div>
     <div id="register-form" style="display:none;">
-      <h2 style="text-align:center">Register</h2>
-      <input type="text" id="reg-username" placeholder="New Username" />
-      <input type="password" id="reg-password" placeholder="New Password" />
+      <input type="text" id="reg-username" placeholder="Username" />
+      <input type="password" id="reg-password" placeholder="Password" />
       <button onclick="handleRegister()">Create Account</button>
-      <p style="text-align:center; cursor:pointer; color:#007bff" onclick="toggleAuth(false)">Back to Login</p>
+      <p onclick="toggleAuth(false)" style="color:#007bff; cursor:pointer">Back</p>
     </div>
   </div>
 
   <div class="container" id="post-section">
-    <div class="header-flex">
-        <h3 id="welcome-msg" style="margin:0"></h3>
-        <button onclick="handleLogout()" style="width:auto; padding:5px 15px; background:#6c757d">Logout</button>
-    </div>
+    <h3 id="welcome-msg"></h3>
+    <button onclick="handleLogout()" style="background:#6c757d; width:auto">Logout</button>
     <input type="file" id="fileInput" accept="image/*" />
-    <textarea id="postText" placeholder="What's on your mind?" rows="3"></textarea>
-    <button onclick="handlePost()">Post Now</button>
+    <textarea id="postText" placeholder="What's on your mind?"></textarea>
+    <button onclick="handlePost()">Post</button>
     <div id="posts"></div>
   </div>
 
@@ -68,14 +62,14 @@
     const user = document.getElementById('reg-username').value;
     const pass = document.getElementById('reg-password').value;
     const { error } = await db.auth.signUp({ email: user + "@app.com", password: pass });
-    if (error) alert(error.message); else alert("Registration Success! Please Login.");
+    if (error) alert(error.message); else alert("Success!");
   }
 
   async function handleLogin() {
     const user = document.getElementById('login-username').value;
     const pass = document.getElementById('login-password').value;
     const { error } = await db.auth.signInWithPassword({ email: user + "@app.com", password: pass });
-    if (error) alert("Login Failed: " + error.message); else checkSession();
+    if (error) alert(error.message); else checkSession();
   }
 
   async function handleLogout() { await db.auth.signOut(); location.reload(); }
@@ -90,101 +84,65 @@
     const text = document.getElementById('postText').value;
     if (!text && !selectedImage) return;
     const myName = userSession.email.split('@')[0];
-    const { error } = await db.from('posts').insert([{
-      username: myName,
-      text: text,
-      image: selectedImage,
-      user_id: userSession.id,
-      likes: 0,
-      likedBy: [],
-      comments: []
+    await db.from('posts').insert([{
+      username: myName, text: text, image: selectedImage, user_id: userSession.id, likes: 0, likedBy: [], comments: []
     }]);
-    if (error) alert(error.message); else {
-      document.getElementById('postText').value = '';
-      selectedImage = '';
-      document.getElementById('fileInput').value = '';
-      renderPosts();
-    }
+    document.getElementById('postText').value = '';
+    selectedImage = '';
+    renderPosts();
   }
 
   async function handleUpdateComment(postId) {
     const input = document.getElementById(`in-cmnt-${postId}`);
     const val = input.value.trim();
     if (!val) return;
-
     const myName = userSession.email.split('@')[0];
-    const newComment = `<strong>${myName}</strong>: ${val}`;
-
     const { data: post } = await db.from('posts').select('comments').eq('id', postId).single();
-    const updatedComments = [...(post.comments || []), newComment];
-
-    const { error } = await db.from('posts').update({ comments: updatedComments }).eq('id', postId);
-
-    if (error) alert("Error: " + error.message); 
-    else {
-        input.value = '';
-        renderPosts();
-    }
+    const updated = [...(post.comments || []), `<b>${myName}</b>: ${val}`];
+    await db.from('posts').update({ comments: updated }).eq('id', postId);
+    input.value = '';
+    renderPosts();
   }
 
   async function handleToggleLike(id) {
     const myName = userSession.email.split('@')[0];
     const { data: post } = await db.from('posts').select('likes, likedBy').eq('id', id).single();
-    
     let list = post.likedBy || [];
-    let likes = post.likes || 0;
-
-    if (list.includes(myName)) {
-        list = list.filter(u => u !== myName);
-        likes--;
-    } else {
-        list.push(myName);
-        likes++;
-    }
-    await db.from('posts').update({ likes: likes, likedBy: list }).eq('id', id);
+    let lks = post.likes || 0;
+    if (list.includes(myName)) { list = list.filter(u => u !== myName); lks--; }
+    else { list.push(myName); lks++; }
+    await db.from('posts').update({ likes: lks, likedBy: list }).eq('id', id);
     renderPosts();
   }
 
   async function handleDeletePost(id) {
-    if (confirm("Delete this post?")) {
-        await db.from('posts').delete().eq('id', id);
-        renderPosts();
-    }
+    if (confirm("Delete?")) { await db.from('posts').delete().eq('id', id); renderPosts(); }
   }
 
   async function renderPosts() {
-    const { data: posts, error } = await db.from('posts').select('*').order('created_at', { ascending: false });
-    if (error) return console.error(error);
-
+    const { data: posts } = await db.from('posts').select('*').order('created_at', { ascending: false });
     const container = document.getElementById('posts');
     container.innerHTML = '';
-
-    if (posts && Array.isArray(posts)) {
-      posts.forEach(post => {
-        const isOwner = userSession && post.user_id === userSession.id;
+    if (posts) {
+      posts.forEach(p => {
+        const isOwner = userSession && p.user_id === userSession.id;
         const myName = userSession.email.split('@')[0];
-        const hasLiked = (post.likedBy || []).includes(myName);
-        
+        const hasLiked = (p.likedBy || []).includes(myName);
         const div = document.createElement('div');
         div.className = 'post-container';
         div.innerHTML = `
-          <strong style="color:#007bff">@${post.username}</strong>
-          <p style="margin:10px 0">${post.text}</p>
-          ${post.image ? `<img src="${post.image}">` : ''}
-          <div style="border-top:1px solid #eee; padding-top:10px">
-              <button class="btn-action" onclick="handleToggleLike('${post.id}')">
-                  ${hasLiked ? '❤️ Unlike' : '🤍 Like'} (${post.likes || 0})
-              </button>
-              ${isOwner ? `<button class="btn-action btn-delete" onclick="handleDeletePost('${post.id}')">🗑️ Delete</button>` : ''}
+          <strong>@${p.username}</strong>
+          <p>${p.text}</p>
+          ${p.image ? `<img src="${p.image}">` : ''}
+          <div>
+            <button class="btn-action" onclick="handleToggleLike('${p.id}')">${hasLiked ? '❤️' : '🤍'} ${p.likes || 0}</button>
+            ${isOwner ? `<button class="btn-action btn-delete" onclick="handleDeletePost('${p.id}')">🗑️</button>` : ''}
           </div>
-          <div style="margin-top:15px">
-              <input type="text" id="in-cmnt-${post.id}" placeholder="Tulis komentar..." style="padding:8px; font-size:12px; width:70%">
-              <button class="btn-comment" onclick="handleUpdateComment('${post.id}')">Send</button>
-              <div id="cmnt-list-${post.id}" style="margin-top:10px">
-                  ${(post.comments || []).map(c => `<div class="comment-box">${c}</div>`).join('')}
-              </div>
-          </div>
-        `;
+          <div style="margin-top:10px">
+            <input type="text" id="in-cmnt-${p.id}" placeholder="Komen..." style="width:70%; padding:5px">
+            <button class="btn-comment" onclick="handleUpdateComment('${p.id}')">Send</button>
+            <div style="margin-top:5px">${(p.comments || []).map(c => `<div class="comment-box">${c}</div>`).join('')}</div>
+          </div>`;
         container.appendChild(div);
       });
     }
@@ -203,9 +161,7 @@
       document.getElementById('post-section').style.display = 'none';
     }
   }
-
   checkSession();
-
 </script>
 </body>
 </html>
