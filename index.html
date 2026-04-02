@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cihuuy post&watch</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Supabase Social System</title>
+  <script src="https:
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; padding: 20px; margin: 0; }
     .container { width: 95%; max-width: 500px; margin: 0 auto; }
@@ -52,7 +52,7 @@
   </div>
 
 <script>
-  const SUPABASE_URL = 'https://dtsloktbdwjnyhjcnuix.supabase.co';
+  const SUPABASE_URL = 'https:
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0c2xva3RiZHdqbnloamNudWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMzg1NjQsImV4cCI6MjA5MDYxNDU2NH0.B_5l7F2jxWZvelmkqKeIcMzB_fH6ZUXw4LH0llzu5Ws';
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -102,59 +102,38 @@
     if (error) alert(error.message); else {
       document.getElementById('postText').value = '';
       selectedImage = '';
+      document.getElementById('fileInput').value = '';
       renderPosts();
     }
   }
 
-  async function renderPosts() {
-    const { data: posts } = await db.from('posts').select('*').order('created_at', { ascending: false });
-    const container = document.getElementById('posts');
-    container.innerHTML = '';
-
-    posts.forEach(post => {
-      const isOwner = userSession && post.user_id === userSession.id;
-      const myName = userSession.email.split('@')[0];
-      const hasLiked = (post.likedBy || []).includes(myName);
-      
-      const div = document.createElement('div');
-      div.className = 'post-container';
-      div.innerHTML = `
-        <strong style="color:#007bff">@${post.username}</strong>
-        <p style="margin:10px 0">${post.text}</p>
-        ${post.image ? `<img src="${post.image}">` : ''}
-        <div style="border-top:1px solid #eee; padding-top:10px">
-            <button class="btn-action" onclick="toggleLike('${post.id}', ${post.likes || 0}, ${JSON.stringify(post.likedBy || [])})">
-                ${hasLiked ? '❤️ Unlike' : '🤍 Like'} (${post.likes || 0})
-            </button>
-            ${isOwner ? `<button class="btn-action btn-delete" onclick="deletePost('${post.id}')">🗑️ Delete</button>` : ''}
-        </div>
-        <div style="margin-top:15px">
-            <input type="text" id="in-cmnt-${post.id}" placeholder="Write a comment..." style="padding:8px; font-size:12px; width:70%">
-            <button class="btn-comment" onclick="addComment('${post.id}', ${JSON.stringify(post.comments || [])})">Send</button>
-            <div id="cmnt-list-${post.id}" style="margin-top:10px">
-                ${(post.comments || []).map(c => `<div class="comment-box">${c}</div>`).join('')}
-            </div>
-        </div>
-      `;
-      container.appendChild(div);
-    });
-  }
-
-  async function addComment(id, currentComments) {
-    const input = document.getElementById(`in-cmnt-${id}`);
+  async function handleUpdateComment(postId) {
+    const input = document.getElementById(`in-cmnt-${postId}`);
     const val = input.value.trim();
     if (!val) return;
+
     const myName = userSession.email.split('@')[0];
-    const newList = [...currentComments, `<strong>${myName}</strong>: ${val}`];
-    
-    const { error } = await db.from('posts').update({ comments: newList }).eq('id', id);
-    if (error) alert(error.message); else renderPosts();
+    const newComment = `<strong>${myName}</strong>: ${val}`;
+
+    const { data: post } = await db.from('posts').select('comments').eq('id', postId).single();
+    const updatedComments = [...(post.comments || []), newComment];
+
+    const { error } = await db.from('posts').update({ comments: updatedComments }).eq('id', postId);
+
+    if (error) alert("Error: " + error.message); 
+    else {
+        input.value = '';
+        renderPosts();
+    }
   }
 
-  async function toggleLike(id, currentLikes, likedBy) {
+  async function handleToggleLike(id) {
     const myName = userSession.email.split('@')[0];
-    let list = likedBy || [];
-    let likes = currentLikes;
+    const { data: post } = await db.from('posts').select('likes, likedBy').eq('id', id).single();
+    
+    let list = post.likedBy || [];
+    let likes = post.likes || 0;
+
     if (list.includes(myName)) {
         list = list.filter(u => u !== myName);
         likes--;
@@ -166,10 +145,48 @@
     renderPosts();
   }
 
-  async function deletePost(id) {
+  async function handleDeletePost(id) {
     if (confirm("Delete this post?")) {
         await db.from('posts').delete().eq('id', id);
         renderPosts();
+    }
+  }
+
+  async function renderPosts() {
+    const { data: posts, error } = await db.from('posts').select('*').order('created_at', { ascending: false });
+    if (error) return console.error(error);
+
+    const container = document.getElementById('posts');
+    container.innerHTML = '';
+
+    if (posts && Array.isArray(posts)) {
+      posts.forEach(post => {
+        const isOwner = userSession && post.user_id === userSession.id;
+        const myName = userSession.email.split('@')[0];
+        const hasLiked = (post.likedBy || []).includes(myName);
+        
+        const div = document.createElement('div');
+        div.className = 'post-container';
+        div.innerHTML = `
+          <strong style="color:#007bff">@${post.username}</strong>
+          <p style="margin:10px 0">${post.text}</p>
+          ${post.image ? `<img src="${post.image}">` : ''}
+          <div style="border-top:1px solid #eee; padding-top:10px">
+              <button class="btn-action" onclick="handleToggleLike('${post.id}')">
+                  ${hasLiked ? '❤️ Unlike' : '🤍 Like'} (${post.likes || 0})
+              </button>
+              ${isOwner ? `<button class="btn-action btn-delete" onclick="handleDeletePost('${post.id}')">🗑️ Delete</button>` : ''}
+          </div>
+          <div style="margin-top:15px">
+              <input type="text" id="in-cmnt-${post.id}" placeholder="Tulis komentar..." style="padding:8px; font-size:12px; width:70%">
+              <button class="btn-comment" onclick="handleUpdateComment('${post.id}')">Send</button>
+              <div id="cmnt-list-${post.id}" style="margin-top:10px">
+                  ${(post.comments || []).map(c => `<div class="comment-box">${c}</div>`).join('')}
+              </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
     }
   }
 
@@ -188,6 +205,7 @@
   }
 
   checkSession();
+
 </script>
 </body>
 </html>
