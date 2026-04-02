@@ -3,253 +3,191 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sign In & Post System (Supabase Version)</title>
-  <script src="https:
+  <title>Cihuuy post&watch</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; margin: 0; }
-    .container { width: 80%; margin: 0 auto; }
-    h2 { text-align: center; }
-    input[type="text"], input[type="password"], textarea { width: 100%; padding: 10px; margin: 10px 0; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
-    button { padding: 10px; background-color: #007bff; color: white; border: none; font-size: 16px; border-radius: 5px; cursor: pointer; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; padding: 20px; margin: 0; }
+    .container { width: 95%; max-width: 500px; margin: 0 auto; }
+    input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; outline: none; }
+    button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
     button:hover { background-color: #0056b3; }
-    .error-message { color: red; font-size: 14px; text-align: center; }
-    .toggle-link { text-align: center; margin-top: 10px; cursor: pointer; color: #007bff; }
-    .post-container { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #fff; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-    .post-container h3 { margin: 0; font-size: 18px; }
-    .post-container p { font-size: 14px; color: #333; }
-    .like-button, .comment-submit, .delete-button { margin-top: 10px; padding: 5px 10px; cursor: pointer; border-radius: 5px; margin-right: 5px; border: none; color: white; }
-    .like-button { background-color: #007bff; }
-    .comment-submit { background-color: #28a745; }
-    .delete-button { background-color: red; }
-    .like-count { margin-left: 10px; font-size: 14px; color: #555; }
-    .comment-section { margin-top: 10px; border-top: 1px solid #ccc; padding-top: 5px; }
-    .comment { font-size: 14px; margin-top: 5px; padding: 3px; background: #f9f9f9; border-radius: 3px; }
-    .post-container img { max-width: 100%; max-height: 300px; display: block; margin: 10px auto; border-radius: 8px; }
+    .post-container { margin-top: 20px; padding: 15px; border-radius: 12px; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .post-container img { max-width: 100%; border-radius: 8px; margin-top: 10px; display: block; }
+    .comment-box { background: #f8f9fa; padding: 8px; margin-top: 5px; border-radius: 6px; font-size: 13px; border-left: 3px solid #007bff; }
+    .btn-action { width: auto; padding: 6px 12px; font-size: 13px; margin-right: 5px; margin-top: 10px; }
+    .btn-delete { background-color: #ff4d4d; }
+    .btn-comment { background-color: #28a745; width: auto; margin-top: 5px; }
+    #auth-section, #post-section { display: none; }
+    .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
   </style>
 </head>
 <body>
+
   <div class="container" id="auth-section">
     <div id="login-form">
-      <h2>Sign In</h2>
-      <input type="text" id="login-username" placeholder="Enter Username" />
-      <input type="password" id="login-password" placeholder="Enter Password" />
-      <button id="loginButton">Login</button>
-      <div id="login-error-message" class="error-message"></div>
-      <div class="toggle-link" onclick="showCreateAccount()">Don't have an account? Create one here</div>
+      <h2 style="text-align:center">Sign In</h2>
+      <input type="text" id="login-username" placeholder="Username" />
+      <input type="password" id="login-password" placeholder="Password" />
+      <button onclick="handleLogin()">Login</button>
+      <p style="text-align:center; cursor:pointer; color:#007bff" onclick="toggleAuth(true)">Register New Account</p>
     </div>
-    <div id="create-account-form" style="display: none;">
-      <h2>Create Account</h2>
-      <input type="text" id="create-username" placeholder="Create Username" />
-      <input type="password" id="create-password" placeholder="Create Password" />
-      <button id="createButton">Create Account</button>
-      <div id="create-error-message" class="error-message"></div>
-      <div class="toggle-link" onclick="showLogin()">Already have an account? Login here</div>
+    <div id="register-form" style="display:none;">
+      <h2 style="text-align:center">Register</h2>
+      <input type="text" id="reg-username" placeholder="New Username" />
+      <input type="password" id="reg-password" placeholder="New Password" />
+      <button onclick="handleRegister()">Create Account</button>
+      <p style="text-align:center; cursor:pointer; color:#007bff" onclick="toggleAuth(false)">Back to Login</p>
     </div>
   </div>
 
-  <div class="container" id="post-section" style="display: none;">
-    <h2 id="welcome-msg"></h2>
-    <div id="error-message" class="error-message"></div>
+  <div class="container" id="post-section">
+    <div class="header-flex">
+        <h3 id="welcome-msg" style="margin:0"></h3>
+        <button onclick="handleLogout()" style="width:auto; padding:5px 15px; background:#6c757d">Logout</button>
+    </div>
     <input type="file" id="fileInput" accept="image/*" />
-    <textarea id="postText" placeholder="Write something..." rows="4"></textarea>
-    <button id="postButton">Post</button>
+    <textarea id="postText" placeholder="What's on your mind?" rows="3"></textarea>
+    <button onclick="handlePost()">Post Now</button>
     <div id="posts"></div>
   </div>
 
 <script>
-  
-  const SUPABASE_URL = 'https:
+  const SUPABASE_URL = 'https://dtsloktbdwjnyhjcnuix.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0c2xva3RiZHdqbnloamNudWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMzg1NjQsImV4cCI6MjA5MDYxNDU2NH0.B_5l7F2jxWZvelmkqKeIcMzB_fH6ZUXw4LH0llzu5Ws';
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  let currentUser = localStorage.getItem('currentUser');
-  let selectedImageSrc = '';
+  let userSession = null;
+  let selectedImage = '';
 
-  
-  function showCreateAccount() { 
-    document.getElementById('login-form').style.display = 'none'; 
-    document.getElementById('create-account-form').style.display = 'block'; 
-  }
-  function showLogin() { 
-    document.getElementById('create-account-form').style.display = 'none'; 
-    document.getElementById('login-form').style.display = 'block'; 
-  }
-  function showPostSection() { 
-      document.getElementById('auth-section').style.display = 'none'; 
-      document.getElementById('post-section').style.display = 'block';
-      document.getElementById('welcome-msg').textContent = "Welcome, " + currentUser;
+  function toggleAuth(isReg) {
+    document.getElementById('login-form').style.display = isReg ? 'none' : 'block';
+    document.getElementById('register-form').style.display = isReg ? 'block' : 'none';
   }
 
-  
+  async function handleRegister() {
+    const user = document.getElementById('reg-username').value;
+    const pass = document.getElementById('reg-password').value;
+    const { error } = await db.auth.signUp({ email: user + "@app.com", password: pass });
+    if (error) alert(error.message); else alert("Registration Success! Please Login.");
+  }
 
-  
-  document.getElementById('createButton').addEventListener('click', async () => {
-    const userinput = document.getElementById('create-username').value;
-    const password = document.getElementById('create-password').value;
-    
-    
-    const email = userinput + "@gmail.com";
+  async function handleLogin() {
+    const user = document.getElementById('login-username').value;
+    const pass = document.getElementById('login-password').value;
+    const { error } = await db.auth.signInWithPassword({ email: user + "@app.com", password: pass });
+    if (error) alert("Login Failed: " + error.message); else checkSession();
+  }
 
-    const { data, error } = await db.auth.signUp({ email, password });
+  async function handleLogout() { await db.auth.signOut(); location.reload(); }
 
-    if (error) {
-      alert("Gagal buat akun: " + error.message);
-    } else {
-      alert("Akun berhasil dibuat!");
-      currentUser = userinput;
-      localStorage.setItem('currentUser', currentUser);
-      showPostSection();
-      renderPosts();
-    }
-  });
+  document.getElementById('fileInput').onchange = (e) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => selectedImage = ev.target.result;
+    reader.readAsDataURL(e.target.files[0]);
+  };
 
-  
-  document.getElementById('loginButton').addEventListener('click', async () => {
-    const userinput = document.getElementById('login-username').value;
-    const password = document.getElementById('login-password').value;
-    const email = userinput + "@gmail.com";
-
-    const { data, error } = await db.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      alert("Login gagal: " + error.message);
-    } else {
-      currentUser = userinput;
-      localStorage.setItem('currentUser', currentUser);
-      showPostSection();
-      renderPosts();
-    }
-  });
-
-  
-
-  
-  document.getElementById('fileInput').addEventListener('change', function(event) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => selectedImageSrc = e.target.result;
-      reader.readAsDataURL(file);
-    }
-  });
-
-  
-  document.getElementById('postButton').addEventListener('click', async function() {
+  async function handlePost() {
     const text = document.getElementById('postText').value;
-    
-    
-    const { data: { user } } = await db.auth.getUser();
-
-    if (!user) return alert("Lu harus login dulu!");
-
-    if (text || selectedImageSrc) {
-      const { error } = await db.from('posts').insert([{
-        username: currentUser,
-        text: text,
-        image: selectedImageSrc,
-        user_id: user.id, 
-        likes: 0,
-        likedBy: [],
-        comments: []
-      }]);
-
-      if (error) {
-          alert("Gagal Post: " + error.message);
-      } else {
-          document.getElementById('postText').value = '';
-          selectedImageSrc = '';
-          document.getElementById('fileInput').value = '';
-          renderPosts();
-      }
+    if (!text && !selectedImage) return;
+    const myName = userSession.email.split('@')[0];
+    const { error } = await db.from('posts').insert([{
+      username: myName,
+      text: text,
+      image: selectedImage,
+      user_id: userSession.id,
+      likes: 0,
+      likedBy: [],
+      comments: []
+    }]);
+    if (error) alert(error.message); else {
+      document.getElementById('postText').value = '';
+      selectedImage = '';
+      renderPosts();
     }
-  });
+  }
 
-  
   async function renderPosts() {
-    const { data: posts, error } = await db
-      .from('posts')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) return console.error(error);
-
-    const postsContainer = document.getElementById('posts');
-    postsContainer.innerHTML = '';
-
-    
-    const { data: { user } } = await db.auth.getUser();
+    const { data: posts } = await db.from('posts').select('*').order('created_at', { ascending: false });
+    const container = document.getElementById('posts');
+    container.innerHTML = '';
 
     posts.forEach(post => {
-      const postDiv = document.createElement('div');
-      postDiv.className = 'post-container';
+      const isOwner = userSession && post.user_id === userSession.id;
+      const myName = userSession.email.split('@')[0];
+      const hasLiked = (post.likedBy || []).includes(myName);
       
-      
-      const isOwner = user && post.user_id === user.id;
-      const isLiked = post.likedBy && post.likedBy.includes(currentUser);
-
-      postDiv.innerHTML = `
-        <h3>${post.username}</h3>
-        <p>${post.text}</p>
+      const div = document.createElement('div');
+      div.className = 'post-container';
+      div.innerHTML = `
+        <strong style="color:#007bff">@${post.username}</strong>
+        <p style="margin:10px 0">${post.text}</p>
         ${post.image ? `<img src="${post.image}">` : ''}
-        <div>
-          <button class="like-button" onclick="toggleLike('${post.id}', ${post.likes}, ${JSON.stringify(post.likedBy)})">
-              ${isLiked ? 'Unlike' : 'Like'}
-          </button>
-          <span class="like-count">${post.likes || 0} likes</span>
-          ${isOwner ? `<button class="delete-button" onclick="deletePost('${post.id}')">Delete</button>` : ''}
-          <div class="comment-section">
-            <input type="text" placeholder="Add a comment" id="comment-${post.id}" />
-            <button class="comment-submit" onclick="addComment('${post.id}', ${JSON.stringify(post.comments)})">Comment</button>
-            <div id="list-${post.id}">
-              ${post.comments ? post.comments.map(c => `<div class="comment">${c}</div>`).join('') : ''}
+        <div style="border-top:1px solid #eee; padding-top:10px">
+            <button class="btn-action" onclick="toggleLike('${post.id}', ${post.likes || 0}, ${JSON.stringify(post.likedBy || [])})">
+                ${hasLiked ? '❤️ Unlike' : '🤍 Like'} (${post.likes || 0})
+            </button>
+            ${isOwner ? `<button class="btn-action btn-delete" onclick="deletePost('${post.id}')">🗑️ Delete</button>` : ''}
+        </div>
+        <div style="margin-top:15px">
+            <input type="text" id="in-cmnt-${post.id}" placeholder="Write a comment..." style="padding:8px; font-size:12px; width:70%">
+            <button class="btn-comment" onclick="addComment('${post.id}', ${JSON.stringify(post.comments || [])})">Send</button>
+            <div id="cmnt-list-${post.id}" style="margin-top:10px">
+                ${(post.comments || []).map(c => `<div class="comment-box">${c}</div>`).join('')}
             </div>
-          </div>
-        </div>`;
-      postsContainer.appendChild(postDiv);
+        </div>
+      `;
+      container.appendChild(div);
     });
   }
 
-  
-  async function toggleLike(postId, currentLikes, likedBy) {
+  async function addComment(id, currentComments) {
+    const input = document.getElementById(`in-cmnt-${id}`);
+    const val = input.value.trim();
+    if (!val) return;
+    const myName = userSession.email.split('@')[0];
+    const newList = [...currentComments, `<strong>${myName}</strong>: ${val}`];
+    
+    const { error } = await db.from('posts').update({ comments: newList }).eq('id', id);
+    if (error) alert(error.message); else renderPosts();
+  }
+
+  async function toggleLike(id, currentLikes, likedBy) {
+    const myName = userSession.email.split('@')[0];
     let list = likedBy || [];
-    let likes = currentLikes || 0;
-    if (!list.includes(currentUser)) { likes++; list.push(currentUser); } 
-    else { likes--; list = list.filter(u => u !== currentUser); }
-    await db.from('posts').update({ likes: likes, likedBy: list }).eq('id', postId);
+    let likes = currentLikes;
+    if (list.includes(myName)) {
+        list = list.filter(u => u !== myName);
+        likes--;
+    } else {
+        list.push(myName);
+        likes++;
+    }
+    await db.from('posts').update({ likes: likes, likedBy: list }).eq('id', id);
     renderPosts();
   }
 
-  async function addComment(postId, currentComments) {
-    const input = document.getElementById(`comment-${postId}`);
-    const text = input.value.trim();
-    let list = currentComments || [];
-    if (text) {
-      list.push(`${currentUser}: ${text}`);
-      await db.from('posts').update({ comments: list }).eq('id', postId);
-      input.value = '';
-      renderPosts();
-    }
-  }
-
-  async function deletePost(postId) {
-    if(confirm("Hapus post ini?")) {
-        const { error } = await db.from('posts').delete().eq('id', postId);
-        if (error) alert("Gagal hapus: " + error.message);
+  async function deletePost(id) {
+    if (confirm("Delete this post?")) {
+        await db.from('posts').delete().eq('id', id);
         renderPosts();
     }
   }
 
-  
   async function checkSession() {
     const { data: { session } } = await db.auth.getSession();
-    if (session && currentUser) {
-      showPostSection();
+    if (session) {
+      userSession = session.user;
+      document.getElementById('auth-section').style.display = 'none';
+      document.getElementById('post-section').style.display = 'block';
+      document.getElementById('welcome-msg').innerText = "@" + userSession.email.split('@')[0];
       renderPosts();
+    } else {
+      document.getElementById('auth-section').style.display = 'block';
+      document.getElementById('post-section').style.display = 'none';
     }
   }
+
   checkSession();
 </script>
-
-
 </body>
 </html>
