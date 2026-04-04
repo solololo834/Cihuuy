@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cihuuy Post</title>
-  <script src="https:
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: sans-serif; background-color: #f0f2f5; padding: 20px; margin: 0; }
     .container { width: 95%; max-width: 500px; margin: 0 auto; }
@@ -50,7 +50,7 @@
   </div>
 
 <script>
-  const SUPABASE_URL = 'https:
+  const SUPABASE_URL = 'https://dtsloktbdwjnyhjcnuix.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0c2xva3RiZHdqbnloamNudWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMzg1NjQsImV4cCI6MjA5MDYxNDU2NH0.B_5l7F2jxWZvelmkqKeIcMzB_fH6ZUXw4LH0llzu5Ws';
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -87,39 +87,6 @@
     }
   };
 
-async function handlePost() {
-  const text = document.getElementById('postText').value;
-  
-  
-  if (!text && !selectedFile) {
-    alert("Isi dulu teksnya atau pilih file!");
-    return;
-  }
-
-  const myName = userSession.email.split('@')[0];
-
-  
-  const { data, error } = await db.from('posts').insert([{
-    username: myName,
-    text: text,
-    image: selectedFile, 
-    user_id: userSession.id,
-    likes: 0,
-    likedBy: [],
-    comments: []
-  }]);
-
-  if (error) {
-    console.error("Error Supabase:", error);
-    alert("Gagal post: " + error.message);
-  } else {
-    
-    document.getElementById('postText').value = '';
-    document.getElementById('fileInput').value = '';
-    selectedFile = ''; 
-    renderPosts();     
-  }
-}
 
 
   async function handleUpdateComment(postId) {
